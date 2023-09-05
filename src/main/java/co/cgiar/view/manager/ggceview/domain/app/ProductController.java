@@ -3,11 +3,11 @@ package co.cgiar.view.manager.ggceview.domain.app;
 import co.cgiar.view.manager.ggceview.domain.ProductReadView;
 import co.cgiar.view.manager.ggceview.domain.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/products")
@@ -15,23 +15,34 @@ public class ProductController {
     @Autowired
     private ProductService service;
 
-    public List<ProductReadView> getAll() {
-        return service.getAll();
+    @GetMapping("/all")
+    public ResponseEntity<List<ProductReadView>> getAll() {
+        return ResponseEntity.ok(service.getAll());
     }
 
-    public Optional<ProductReadView> getProduct(int productId) {
-        return service.getProduct(productId);
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductReadView> getProduct(@PathVariable("id") int productId) {
+        return service.getProduct(productId).map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    public Optional<List<ProductReadView>> getByCategory(int categoryId) {
-        return service.getByCategory(categoryId);
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<ProductReadView>> getByCategory(@PathVariable("categoryId") int categoryId) {
+        return service.getByCategory(categoryId).map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    public ProductReadView save(ProductReadView product) {
-        return service.save(product);
+    @PostMapping("/save")
+    public ResponseEntity<ProductReadView> save(@RequestBody ProductReadView product) {
+        return new ResponseEntity<>(service.save(product), HttpStatus.CREATED);
     }
 
-    public boolean delete(int productId) {
-        return service.delete(productId);
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity delete(@PathVariable("productId") int productId) {
+        if (service.delete(productId)) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
